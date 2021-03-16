@@ -23,7 +23,7 @@ type Config struct {
 	ContextKey string
 
 	// TracerName
-	// Optional. Default: github.com/aphagon/gofiber-middleware/tracing
+	// Optional. Default: github.com/aphagon/gofiber-middleware/otelfiber
 	TracerName string
 
 	// TracerProvider
