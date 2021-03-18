@@ -30,13 +30,14 @@ func New(config ...Config) fiber.Handler {
 		// concat all span options, dynamic and static
 		opts := concatSpanOptions(
 			[]trace.SpanOption{
-				trace.WithAttributes(semconv.HTTPMethodKey.String(c.Route().Method)),
+				trace.WithAttributes(semconv.HTTPMethodKey.String(c.Method())),
 				trace.WithAttributes(semconv.HTTPTargetKey.String(string(c.Request().RequestURI()))),
-				trace.WithAttributes(semconv.HTTPRouteKey.String(c.Route().Path)),
+				trace.WithAttributes(semconv.HTTPRouteKey.String(c.Path())),
 				trace.WithAttributes(semconv.HTTPURLKey.String(c.OriginalURL())),
 				trace.WithAttributes(semconv.HTTPUserAgentKey.String(string(c.Request().Header.UserAgent()))),
 				trace.WithAttributes(semconv.HTTPRequestContentLengthKey.Int(c.Request().Header.ContentLength())),
 				trace.WithAttributes(semconv.HTTPSchemeKey.String(c.Protocol())),
+				trace.WithAttributes(semconv.HTTPHostKey.String(c.Hostname())),
 				trace.WithAttributes(semconv.HTTPServerNameKey.String(cfg.ServiceName)),
 				trace.WithAttributes(semconv.NetHostIPKey.String(c.IP())),
 				trace.WithAttributes(semconv.NetTransportTCP),
@@ -45,9 +46,9 @@ func New(config ...Config) fiber.Handler {
 			cfg.TracerStartAttributes,
 		)
 
-		spanName := c.Route().Path
+		spanName := c.Path()
 		if spanName == "" {
-			spanName = fmt.Sprintf("HTTP %s route not found", c.Route().Method)
+			spanName = fmt.Sprintf("HTTP %s route not found", c.Method())
 		}
 
 		ctx, span := tracer.Start(c.Context(), spanName, opts...)
@@ -63,6 +64,7 @@ func New(config ...Config) fiber.Handler {
 		attrs := semconv.HTTPAttributesFromHTTPStatusCode(statusCode)
 		spanStatus, spanMessage := semconv.SpanStatusFromHTTPStatusCode(statusCode)
 		span.SetAttributes(attrs...)
+		span.SetAttributes(semconv.HTTPResponseContentLengthKey.Int(c.Response().Header.ContentLength()))
 		span.SetStatus(spanStatus, spanMessage)
 
 		return err
