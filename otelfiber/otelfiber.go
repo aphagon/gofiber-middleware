@@ -16,7 +16,7 @@ func New(config ...Config) fiber.Handler {
 	cfg := configDefault(config...)
 
 	tracer := cfg.TracerProvider.Tracer(
-		cfg.TracerName,
+		"github.com/aphagon/gofiber-middleware",
 		trace.WithInstrumentationVersion(contrib.SemVersion()),
 	)
 
@@ -38,7 +38,6 @@ func New(config ...Config) fiber.Handler {
 				trace.WithAttributes(semconv.HTTPRequestContentLengthKey.Int(c.Request().Header.ContentLength())),
 				trace.WithAttributes(semconv.HTTPSchemeKey.String(c.Protocol())),
 				trace.WithAttributes(semconv.HTTPHostKey.String(c.Hostname())),
-				trace.WithAttributes(semconv.HTTPServerNameKey.String(cfg.ServiceName)),
 				trace.WithAttributes(semconv.NetHostIPKey.String(c.IP())),
 				trace.WithAttributes(semconv.NetTransportTCP),
 				trace.WithSpanKind(trace.SpanKindServer),
