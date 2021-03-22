@@ -15,16 +15,8 @@ type Config struct {
 	Next func(c *fiber.Ctx) bool
 
 	// ContextKey
-	// Optional. Default: "publisher".
-	ServiceName string
-
-	// ContextKey
 	// Optional. Default: "otel-fiber".
 	ContextKey string
-
-	// TracerName
-	// Optional. Default: github.com/aphagon/gofiber-middleware
-	TracerName string
 
 	// TracerProvider
 	// Optional. Default: otel.GetTracerProvider().
@@ -46,9 +38,7 @@ type Config struct {
 
 // ConfigDefault is the default config
 var ConfigDefault = Config{
-	ServiceName:    "publisher",
 	ContextKey:     "otel-fiber",
-	TracerName:     "github.com/aphagon/gofiber-middleware",
 	TracerProvider: otel.GetTracerProvider(),
 	Propagators:    otel.GetTextMapPropagator(),
 	TracerStartAttributes: []trace.SpanOption{
@@ -73,16 +63,8 @@ func configDefault(config ...Config) Config {
 		cfg.Next = ConfigDefault.Next
 	}
 
-	if cfg.ServiceName == "" {
-		cfg.ServiceName = ConfigDefault.ServiceName
-	}
-
 	if cfg.ContextKey == "" {
 		cfg.ContextKey = ConfigDefault.ContextKey
-	}
-
-	if cfg.TracerName == "" {
-		cfg.TracerName = ConfigDefault.TracerName
 	}
 
 	if cfg.TracerProvider == nil {
