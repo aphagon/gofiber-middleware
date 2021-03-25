@@ -31,7 +31,6 @@ type Config struct {
 	// Optional. Default: []trace.SpanOption{
 	// 	trace.WithSpanKind(trace.SpanKindServer),
 	// 	trace.WithNewRoot(),
-	// 	trace.WithRecord(),
 	// }
 	TracerStartAttributes []trace.SpanOption
 }
@@ -44,7 +43,6 @@ var ConfigDefault = Config{
 	TracerStartAttributes: []trace.SpanOption{
 		trace.WithSpanKind(trace.SpanKindServer),
 		trace.WithNewRoot(),
-		trace.WithRecord(),
 	},
 }
 
