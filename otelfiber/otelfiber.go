@@ -37,6 +37,7 @@ func New(config ...Config) fiber.Handler {
 				trace.WithAttributes(semconv.HTTPUserAgentKey.String(string(c.Request().Header.UserAgent()))),
 				trace.WithAttributes(semconv.HTTPRequestContentLengthKey.Int(c.Request().Header.ContentLength())),
 				trace.WithAttributes(semconv.HTTPSchemeKey.String(c.Protocol())),
+				trace.WithAttributes(semconv.HTTPClientIPKey.String(c.Context().RemoteAddr().String())),
 				trace.WithAttributes(semconv.HTTPHostKey.String(c.Hostname())),
 				trace.WithAttributes(semconv.NetHostIPKey.String(c.IP())),
 				trace.WithAttributes(semconv.NetTransportTCP),
