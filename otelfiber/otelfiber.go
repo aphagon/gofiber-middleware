@@ -1,12 +1,14 @@
 package otelfiber
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/contrib"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/semconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -20,6 +22,8 @@ func New(config ...Config) fiber.Handler {
 		trace.WithInstrumentationVersion(contrib.SemVersion()),
 	)
 
+	spanTmpl := template.Must(template.New("span").Parse(cfg.SpanName))
+
 	// Return new handler
 	return func(c *fiber.Ctx) error {
 		// Don't execute middleware if Next returns true
@@ -28,8 +32,8 @@ func New(config ...Config) fiber.Handler {
 		}
 
 		// concat all span options, dynamic and static
-		opts := concatSpanOptions(
-			[]trace.SpanOption{
+		spanOptions := concatSpanOptions(
+			[]trace.SpanStartOption{
 				trace.WithAttributes(semconv.HTTPMethodKey.String(c.Method())),
 				trace.WithAttributes(semconv.HTTPTargetKey.String(string(c.Request().RequestURI()))),
 				trace.WithAttributes(semconv.HTTPRouteKey.String(c.Path())),
@@ -46,16 +50,22 @@ func New(config ...Config) fiber.Handler {
 			cfg.TracerStartAttributes,
 		)
 
-		spanName := c.Path()
-		if spanName == "" {
-			spanName = fmt.Sprintf("HTTP %s route not found", c.Method())
+		spanName := new(bytes.Buffer)
+		err := spanTmpl.Execute(spanName, c)
+		if err != nil {
+			return fmt.Errorf("cannot execute span name template: %w", err)
 		}
 
-		ctx, span := tracer.Start(c.Context(), spanName, opts...)
-		c.Locals(cfg.ContextKey, ctx)
+		ctx, span := tracer.Start(
+			c.Context(),
+			spanName.String(),
+			spanOptions...,
+		)
+
+		c.Locals(cfg.LocalKeyName, ctx)
 		defer span.End()
 
-		err := c.Next()
+		err = c.Next()
 		if err != nil {
 			span.SetAttributes(attribute.String("fiber.error", err.Error()))
 		}
@@ -71,8 +81,8 @@ func New(config ...Config) fiber.Handler {
 	}
 }
 
-func concatSpanOptions(sources ...[]trace.SpanOption) []trace.SpanOption {
-	var spanOptions []trace.SpanOption
+func concatSpanOptions(sources ...[]trace.SpanStartOption) []trace.SpanStartOption {
+	var spanOptions []trace.SpanStartOption
 	for _, source := range sources {
 		spanOptions = append(spanOptions, source...)
 	}
