@@ -14,9 +14,13 @@ type Config struct {
 	// Optional. Default: nil
 	Next func(c *fiber.Ctx) bool
 
-	// ContextKey
+	// LocalKeyName
 	// Optional. Default: "otel-fiber".
-	ContextKey string
+	LocalKeyName string
+
+	// SpanName is a template for span naming.
+	// The scope is fiber context.
+	SpanName string
 
 	// TracerProvider
 	// Optional. Default: otel.GetTracerProvider().
@@ -28,19 +32,20 @@ type Config struct {
 
 	// TracerStartAttributes
 	//
-	// Optional. Default: []trace.SpanOption{
+	// Optional. Default: []trace.SpanStartOption{
 	// 	trace.WithSpanKind(trace.SpanKindServer),
 	// 	trace.WithNewRoot(),
 	// }
-	TracerStartAttributes []trace.SpanOption
+	TracerStartAttributes []trace.SpanStartOption
 }
 
 // ConfigDefault is the default config
 var ConfigDefault = Config{
-	ContextKey:     "otel-fiber",
+	SpanName:       "http/request",
+	LocalKeyName:   "otel-fiber",
 	TracerProvider: otel.GetTracerProvider(),
 	Propagators:    otel.GetTextMapPropagator(),
-	TracerStartAttributes: []trace.SpanOption{
+	TracerStartAttributes: []trace.SpanStartOption{
 		trace.WithSpanKind(trace.SpanKindServer),
 		trace.WithNewRoot(),
 	},
@@ -61,8 +66,12 @@ func configDefault(config ...Config) Config {
 		cfg.Next = ConfigDefault.Next
 	}
 
-	if cfg.ContextKey == "" {
-		cfg.ContextKey = ConfigDefault.ContextKey
+	if cfg.SpanName == "" {
+		cfg.SpanName = ConfigDefault.SpanName
+	}
+
+	if cfg.LocalKeyName == "" {
+		cfg.LocalKeyName = ConfigDefault.LocalKeyName
 	}
 
 	if cfg.TracerProvider == nil {
